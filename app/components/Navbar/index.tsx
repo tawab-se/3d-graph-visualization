@@ -1,11 +1,11 @@
 "use client";
+import Link from 'next/link';
 import React, { useState } from 'react';
 
 const navigation = [
-    { name: 'Home', href: '#', current: true },
-    { name: 'Team', href: '#', current: false },
-    { name: 'Projects', href: '#', current: false },
-    { name: 'Calendar', href: '#', current: false },
+    {name: 'Countries', href: '/countries', current: true, disabled: false},
+    {name: 'States', href: '/countries', current: false, disabled: true},
+    {name: 'Cities', href: '/countries', current: false, disabled: true},
 ];
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
@@ -64,17 +64,17 @@ export default function Navbar() {
                         <div className="hidden sm:ml-6 sm:block">
                             <div className="flex space-x-4">
                                 {navigation.map((item) => (
-                                    <a
+                                    <Link
                                         key={item.name}
                                         href={item.href}
                                         className={classNames(
                                             item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                            'rounded-md px-3 py-2 text-base font-medium',
+                                            item.disabled ? 'opacity-50 cursor-not-allowed' : '', 'rounded-md px-3 py-2 text-base font-medium',
                                         )}
                                         aria-current={item.current ? 'page' : undefined}
                                     >
                                         {item.name}
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -91,7 +91,7 @@ export default function Navbar() {
                                 href={item.href}
                                 className={classNames(
                                     item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                    'block rounded-md px-3 py-2 text-base font-medium',
+                                    item.disabled ? 'opacity-50 cursor-not-allowed' : '', 'block rounded-md px-3 py-2 text-base font-medium',
                                 )}
                                 aria-current={item.current ? 'page' : undefined}
                             >
