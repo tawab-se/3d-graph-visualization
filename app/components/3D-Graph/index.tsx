@@ -39,7 +39,7 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
   };
 
   return (
-    <div className="w-full h-[970px] overflow-hidden">
+    <div className="w-full h-screen overflow-hidden">
       <ForceGraph3D
         ref={fgRef}
         graphData={{ nodes, links }}
