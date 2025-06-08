@@ -7,6 +7,7 @@ export default async function Page() {
         id: 'World',
         group: 0,
         name: 'World',
+        flag: "🌍",
     };
 
     const countryNodes = Country.getAllCountries().map((country) => ({

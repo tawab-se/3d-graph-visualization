@@ -1,6 +1,7 @@
 'use client';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import dynamic from 'next/dynamic';
+import * as THREE from 'three';
 
 const ForceGraph3D = dynamic(
   () => import('react-force-graph-3d'),
@@ -10,33 +11,14 @@ const ForceGraph3D = dynamic(
   }
 );
 
-const groupColors = [
-  '#FF6B6B',
-  '#4ECDC4',
-  '#45B7D1',
-  '#FFBE0B',
-  '#FB5607',
-  '#8338EC',
-  '#3A86FF',
-  '#FF006E',
-  '#A5DD9B',
-  '#F9C74F',
-];
-
 export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }) {
   const fgRef = useRef<any>(null);
-  const [selectedNode, setSelectedNode] = useState<any>(null);
   
   const getNodeSize = (node: any) => {
-    if (node.name === 'World') return 10;
-    const latSize = Math.abs(node.latitude || 0) / 90;
-    const longSize = Math.abs(node.longitude || 0) / 180;
-    const sizeFactor = 0.7 * latSize + 0.3 * longSize;
-    return 2 + sizeFactor * 6;
+    return node.name === 'World' ? 10 : 5;
   };
 
   const handleNodeClick = (node: any) => {
-    setSelectedNode(node);
     if (fgRef.current) {
       const distance = 50;
       const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
@@ -60,11 +42,42 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
     </div>`;
   };
 
-  const getNodeColor = (node: any) => {
-    if (node.id === selectedNode?.id) return 'red';
-    const groupIndex = node.group % groupColors.length;
-    return groupColors[groupIndex];
+  const getNodeThreeObject = (node: any) => {
+    if (!node.flag) {
+      // Fallback to default colored sphere if no flag
+      return new THREE.Mesh(
+        new THREE.SphereGeometry(getNodeSize(node)),
+      );
+    }
+  
+    // Create canvas for the flag emoji
+    const canvas = document.createElement('canvas');
+    const size = 128; // Higher resolution for better quality
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, size, size);
+    
+    // Draw flag emoji
+    ctx.font = `${size * 0.8}px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.flag, size/2, size/2);
+  
+    // Create sprite with the flag texture
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ 
+      map: texture,
+    });
+    
+    const sprite = new THREE.Sprite(material);
+    const scale = getNodeSize(node) * 2;
+    sprite.scale.set(scale, scale, 1);
+    return sprite;
   };
+  
 
   return (
     <div className="w-full h-screen overflow-hidden">
@@ -76,12 +89,12 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
         graphData={{ nodes, links }}
         nodeLabel={getNodeLabel}
         nodeAutoColorBy="group"
-        nodeColor={getNodeColor}
         nodeVal={getNodeSize}
         linkDirectionalParticles={4}
         linkDirectionalParticleSpeed={d => d.value * 0.01}
         backgroundColor='rgb(16 24 40)'
         onNodeClick={handleNodeClick}
+        nodeThreeObject={getNodeThreeObject}
       />
     </div>
   );
