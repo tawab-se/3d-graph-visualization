@@ -20,8 +20,6 @@ export default async function Page() {
         longitude: country.longitude,
         phonecode: country.phonecode,
         timezones: country.timezones,
-        isCountry: true,
-        isState: false,
     }));
 
     const nodes = [worldNode, ...countryNodes];

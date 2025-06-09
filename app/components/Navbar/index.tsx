@@ -1,11 +1,12 @@
 "use client";
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import React, { useState } from 'react';
 
 const navigation = [
-    {name: 'Countries', href: '/countries', current: true, disabled: false},
-    {name: 'States', href: '/countries', current: false, disabled: true},
-    {name: 'Cities', href: '/countries', current: false, disabled: true},
+    { name: 'Countries', href: '/countries', disabled: false },
+    { name: 'States', href: '/states', disabled: false },
+    { name: 'Cities', href: '/cities', disabled: true },
 ];
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
@@ -14,8 +15,13 @@ function classNames(...classes: (string | undefined | null | false)[]): string {
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    
-    
+    const pathname = usePathname();
+
+    // Update navigation items with current status based on pathname
+    const navItems = navigation.map(item => ({
+        ...item,
+        current: pathname === item.href
+    }));
 
     return (
         <nav className="bg-gray-800">
@@ -63,13 +69,14 @@ export default function Navbar() {
                         </div>
                         <div className="hidden sm:ml-6 sm:block">
                             <div className="flex space-x-4">
-                                {navigation.map((item) => (
+                                {navItems.map((item) => (
                                     <Link
                                         key={item.name}
-                                        href={item.href}
+                                        href={item.disabled ? '#' : item.href}
                                         className={classNames(
                                             item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                            item.disabled ? 'opacity-50 cursor-not-allowed' : '', 'rounded-md px-3 py-2 text-base font-medium',
+                                            item.disabled ? 'opacity-50 cursor-not-allowed' : '', 
+                                            'rounded-md px-3 py-2 text-base font-medium'
                                         )}
                                         aria-current={item.current ? 'page' : undefined}
                                     >
@@ -85,18 +92,20 @@ export default function Navbar() {
             {mobileMenuOpen && (
                 <div className="sm:hidden" id="mobile-menu">
                     <div className="space-y-1 px-2 pt-2 pb-3">
-                        {navigation.map((item) => (
-                            <a
+                        {navItems.map((item) => (
+                            <Link
                                 key={item.name}
-                                href={item.href}
+                                href={item.disabled ? '#' : item.href}
                                 className={classNames(
                                     item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                                    item.disabled ? 'opacity-50 cursor-not-allowed' : '', 'block rounded-md px-3 py-2 text-base font-medium',
+                                    item.disabled ? 'opacity-50 cursor-not-allowed' : '', 
+                                    'block rounded-md px-3 py-2 text-base font-medium'
                                 )}
                                 aria-current={item.current ? 'page' : undefined}
+                                onClick={() => setMobileMenuOpen(false)}
                             >
                                 {item.name}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 const ForceGraph3D = dynamic(
   () => import('react-force-graph-3d'),
-  { 
+  {
     ssr: false,
     loading: () => <div className="flex items-center justify-center h-[970px]">Loading 3D visualization...</div>
   }
@@ -18,18 +18,18 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
       return { filteredNodes: nodes, filteredLinks: links };
     }
     const searchLower = searchTerm.toLowerCase().trim();
-    const matchedNodes = nodes.filter(node => 
+    const matchedNodes = nodes.filter(node =>
       (node.countryName && node.countryName.toLowerCase().includes(searchLower)) ||
       node.name.toLowerCase().includes(searchLower)
     );
     if (matchedNodes.length === 0) {
       const worldNode = nodes.find(node => node.name === 'World');
-      return { 
-        filteredNodes: worldNode ? [worldNode] : [], 
-        filteredLinks: [] 
+      return {
+        filteredNodes: worldNode ? [worldNode] : [],
+        filteredLinks: []
       };
     }
-    const filteredNodes = nodes.filter(node => 
+    const filteredNodes = nodes.filter(node =>
       node.name === 'World' || matchedNodes.some(matched => matched.id === node.id)
     );
     const filteredLinks = links.filter(link => {
@@ -43,7 +43,7 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
     return { filteredNodes, filteredLinks };
   }, [nodes, links, searchTerm]);
   const getNodeSize = (node: any) => {
-    return node.name === 'World' ? 10 : 5;
+    return node.name === 'World' ? 10 : node.parentId ? 2 : 6;
   };
   const handleNodeClick = (node: any) => {
     if (fgRef.current) {
@@ -57,13 +57,21 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
     }
   };
   const getNodeLabel = (node: any) => {
-    return `<div class="bg-gray-950 p-1 rounded-md">
+    const firstTimezone = node?.timezones?.[0] || {};
+    return `<div class="bg-gray-950 rounded-md">
     <div><h3>Name: ${node.name}</h3></div>
     ${node.countryName ? `<div>Country: ${node.countryName}</div>` : ''}
-    <div>Flag: ${node.flag || 'No flag available'}</div>
+    ${node.flag ? <div>Flag: ${node.flag}</div> : ''}
     <div>Group: ${node.group}</div>
     <div>Latitude: ${node.latitude || 'No latitude available'}</div>
     <div>Longitude: ${node.longitude || 'No longitude available'}</div>
+    ${node.phonecode ? <div>Phone Code: ${node.phonecode}</div> : ''}
+    ${node.currency ? <div>Currency: ${node.currency}</div> : ''}
+    <div>
+      ${firstTimezone.zoneName ? <div>Zone Name: ${firstTimezone.zoneName}</div> : ''}
+      ${firstTimezone.tzName ? <div>Time Zone: ${firstTimezone.tzName}</div> : ''}
+      ${firstTimezone.gmtOffsetName ? <div>Gmt Offset: ${firstTimezone.gmtOffsetName}</div> : ''}
+    </div>
     <div>Size: ${getNodeSize(node).toFixed(2)}</div>
     </div>`;
   };
@@ -83,9 +91,9 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
     ctx.font = `${size * 0.8}px Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node.flag, size/2, size/2);
+    ctx.fillText(node.flag, size / 2, size / 2);
     const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ 
+    const material = new THREE.SpriteMaterial({
       map: texture,
     });
     const sprite = new THREE.Sprite(material);
@@ -93,9 +101,29 @@ export default function Graph3D({ nodes, links }: { nodes: any[], links: any[] }
     sprite.scale.set(scale, scale, 1);
     return sprite;
   };
+  const getLinkOpacity = (link: any) => {
+    const sourceGroup = typeof link.source === 'object' ? link.source.group : 
+                       nodes.find(n => n.id === link.source)?.group;
+    const targetGroup = typeof link.target === 'object' ? link.target.group : 
+                       nodes.find(n => n.id === link.target)?.group;
+    
+    // World-Country link (group 0 and 1)
+    if ((sourceGroup === 0 && targetGroup === 1) || 
+        (sourceGroup === 1 && targetGroup === 0)) {
+      return 1;
+    }
+    // Country-State link (group 1 and 2)
+    if ((sourceGroup === 1 && targetGroup === 2) || 
+        (sourceGroup === 2 && targetGroup === 1)) {
+      return 0.7;
+    }
+    
+    return 0.5; // Default for other connections
+  };
+  
   return (
     <div className="w-full h-screen overflow-hidden relative">
-       <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10">
         <input
           type="text"
           placeholder="Search country..."
